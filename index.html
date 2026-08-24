@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Halloween - Cloudflare Turnstile</title>
+    <title>HappyBirthday</title>
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <!-- Cloudflare Turnstile script -->
@@ -39,6 +39,8 @@
         }
 
         .overlay-body {
+            position: relative;
+            /* để nút OK có thể đặt absolute bên trong */
             background: #ffffff;
             border-radius: 8px;
             padding: 24px 28px 20px;
@@ -47,6 +49,8 @@
             max-width: 400px;
             width: 94%;
             font-family: 'Roboto', Arial, sans-serif;
+            min-height: 200px;
+            /* đảm bảo đủ chỗ cho nút OK */
         }
 
         .overlay-title {
@@ -71,9 +75,25 @@
             display: flex;
             justify-content: center;
             margin: 6px 0 10px;
+            transition: all 0.5s ease;
+            /* hiệu ứng nhanh 0.5s */
+            transform-origin: center center;
         }
 
-        /* Turnstile widget sẽ tự động style, nhưng ta có thể điều chỉnh scale nhỏ trên mobile */
+        /* Trạng thái thu nhỏ và di chuyển lên góc trên bên phải */
+        .turnstile-wrapper.minimize {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            transform: scale(0.3);
+            z-index: 10;
+            margin: 0;
+            /* bỏ margin để căn chỉnh tốt hơn */
+            background: transparent;
+            /* không cần nền */
+        }
+
+        /* Widget Turnstile */
         .cf-turnstile {
             transform: scale(0.95);
             transform-origin: center center;
@@ -92,6 +112,38 @@
         }
         .verify-msg.show {
             opacity: 1;
+        }
+
+        /* ===== Nút OK ===== */
+        .ok-button {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            padding: 12px 36px;
+            background-color: #22c55e;
+            /* xanh lá */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            /* hiệu ứng nhanh, bật ra */
+            transform: scale(0) translateY(30px);
+            opacity: 0;
+            pointer-events: none;
+            /* không cho click khi ẩn */
+        }
+        .ok-button.show {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .ok-button:hover {
+            background-color: #16a34a;
+            transform: scale(1.05);
         }
 
         /* Video scare */
@@ -117,12 +169,19 @@
         @media (max-width: 480px) {
             .overlay-body {
                 padding: 20px 16px 16px;
+                min-height: 180px;
             }
             .overlay-title {
                 font-size: 20px;
             }
             .cf-turnstile {
                 transform: scale(0.82);
+            }
+            .ok-button {
+                padding: 10px 28px;
+                font-size: 16px;
+                bottom: 16px;
+                left: 16px;
             }
         }
 
@@ -135,38 +194,68 @@
 </head>
 
 <body>
+
+    <!-- Overlay với Cloudflare Turnstile -->
     <div id="overlay" class="overlay">
         <div class="overlay-body">
 
             <p class="overlay-title">Xác nhận bạn là con người</p>
             <p class="overlay-sub">Tích vào ô bên dưới</p>
-            <div class="turnstile-wrapper">
-            <div class="cf-turnstile"data-sitekey="0x4AAAAAAEaGpfoU7OEsEqN_"data-callback="onTurnstileSuccess"data-theme="light"data-size="normal">
+
+            <div class="turnstile-wrapper" id="turnstileWrapper">
+                <div class="cf-turnstile"
+                data-sitekey="0x4AAAAAAEaGpfoU7OEsEqN_"
+                data-callback="onTurnstileSuccess"
+                data-theme="light"
+                data-size="normal">
             </div>
         </div>
 
         <div id="verifyMsg" class="verify-msg">✅ Xác nhận thành công!</div>
+
+        <!-- Nút OK (ban đầu ẩn) -->
+        <button id="okButton" class="ok-button">🎃 OK</button>
+
     </div>
 </div>
 
 <!-- Video scare -->
-<div id="scare" class="scare"><video id="video"src="./video.mp4"loop preload="auto"></video>
+<div id="scare" class="scare">
+    <video id="video" src="./video.mp4" loop preload="auto" muted></video>
 </div>
+
 <script>
+    // Hàm callback khi Turnstile thành công
     window.onTurnstileSuccess = function(token) {
         const overlay = document.getElementById('overlay');
         const scare = document.getElementById('scare');
         const video = document.getElementById('video');
         const verifyMsg = document.getElementById('verifyMsg');
+        const turnstileWrapper = document.getElementById('turnstileWrapper');
+        const okButton = document.getElementById('okButton');
+
+        // Hiện thông báo
         verifyMsg.classList.add('show');
-        setTimeout(function() {
+
+        // Thu nhỏ captcha và di chuyển lên góc trên phải
+        turnstileWrapper.classList.add('minimize');
+
+        // Hiển thị nút OK với hiệu ứng
+        okButton.classList.add('show');
+
+        // Khi bấm nút OK, ẩn overlay và phát video
+        okButton.addEventListener('click', function() {
             overlay.style.display = 'none';
             scare.style.display = 'block';
             video.play().catch(function(err) {
                 console.warn('Autoplay bị chặn, nhấn vào video để phát.');
             });
-        }, 500);
+        });
+
+        // (Tùy chọn) Nếu muốn tự động chuyển sau vài giây, có thể thêm setTimeout, nhưng không cần vì đã có nút.
     };
+
+    // Click vào video để phát (nếu autoplay bị chặn)
     document.addEventListener('DOMContentLoaded', function() {
         const video = document.getElementById('video');
         video.addEventListener('click', function() {
@@ -175,7 +264,6 @@
             }
         });
     });
-
 </script>
 
 </body>
