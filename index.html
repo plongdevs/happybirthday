@@ -207,17 +207,10 @@
 </div>
 
 <script>
+    // Nạp trước video ngay khi mở trang
     document.addEventListener('DOMContentLoaded', function() {
         const video = document.getElementById('video');
         video.load();
-
-        // Dự phòng: Click vào màn hình video để bật tiếng/phát nếu bị kẹt
-        video.addEventListener('click', function() {
-            if (video.paused) {
-                video.muted = false;
-                video.play().catch(() => {});
-            }
-        });
     });
 
     window.onTurnstileSuccess = function(token) {
@@ -232,35 +225,24 @@
         turnstileWrapper.classList.add('hide');
         okButton.classList.add('show');
 
+        // Bấm OK -> Phát video trực tiếp giống Code 2
         okButton.onclick = function() {
-            const docElement = document.documentElement;
-            if (docElement.requestFullscreen) {
-                docElement.requestFullscreen().catch(() => {});
-            } else if (docElement.webkitRequestFullscreen) {
-                docElement.webkitRequestFullscreen();
-            } else if (docElement.msRequestFullscreen) {
-                docElement.msRequestFullscreen();
-            }
             overlay.style.display = 'none';
             scare.style.display = 'block';
+            
+            // Bật tiếng và phát ngay lập tức
             video.muted = false;
-            video.play().catch(err => {
-                console.warn('Bị chặn autoplay, thử cơ chế dự phòng:', err);
-                
-                video.muted = true;
-                video.play().then(() => {
-                    video.muted = false;
-                }).catch(() => {
-                    const msg = document.createElement('div');
-                    msg.style.cssText = 'position:absolute; bottom:30px; left:50%; transform:translateX(-50%); color:#fff; background:rgba(0,0,0,0.8); padding:10px 20px; border-radius:20px; font-size:14px; z-index:999;';
-                    msg.textContent = 'Chạm vào màn hình để phát video';
-                    scare.appendChild(msg);
-                    setTimeout(() => msg.remove(), 4000);
-                });
-            });
+            video.play(); 
         };
     };
+
+    // Dự phòng trường hợp bị ngắt âm thanh
+    document.getElementById('video').addEventListener('click', function() {
+        this.muted = false;
+        this.play();
+    });
 </script>
+
 
 
 </body>
