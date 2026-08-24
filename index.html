@@ -76,22 +76,19 @@
             margin: 6px 0 10px;
             transition: all 0.5s ease;
             transform-origin: top right;
-            /* thu nhỏ về góc trên phải của chính nó */
             width: 100%;
         }
 
-        /* Trạng thái thu nhỏ và di chuyển sang góc trên bên phải của overlay-body */
+        /* Trạng thái thu nhỏ và biến mất */
         .turnstile-wrapper.minimize {
-            transform: scale(0.3);
+            transform: scale(0.2);
+            opacity: 0;
             margin: 0;
-            /* bỏ margin để nằm sát góc */
-            align-self: flex-end;
-            /* đẩy sang bên phải */
-            width: auto;
-            /* thu nhỏ theo nội dung */
-            position: relative;
-            top: -10px;
-            right: -10px;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            /* ẩn hoàn toàn */
+            pointer-events: none;
         }
 
         .cf-turnstile {
@@ -223,13 +220,14 @@
         // Hiện thông báo
         verifyMsg.classList.add('show');
 
-        // Thu nhỏ captcha và di chuyển lên góc trên phải của overlay-body
+        // Thu nhỏ và ẩn captcha (biến mất hoàn toàn)
         turnstileWrapper.classList.add('minimize');
 
-        // Hiển thị nút OK ở giữa với hiệu ứng
+        // Sau 0.5s, ẩn hẳn để không chiếm không gian (nhưng đã có width:0, height:0)
+        // Nút OK xuất hiện ở giữa
         okButton.classList.add('show');
 
-        // Xử lý khi bấm OK
+        // Sự kiện bấm OK
         okButton.onclick = function() {
             // Ẩn overlay
             overlay.style.display = 'none';
@@ -237,7 +235,7 @@
             // Hiện video
             scare.style.display = 'block';
 
-            // Yêu cầu fullscreen (F11 ảo)
+            // Fullscreen (F11 ảo)
             if (document.documentElement.requestFullscreen) {
                 document.documentElement.requestFullscreen().catch(() => {});
             } else if (document.documentElement.webkitRequestFullscreen) {
@@ -247,12 +245,11 @@
             }
 
             // Phát video (không mute)
-            video.muted = false; // đảm bảo không mute
+            video.muted = false;
             video.load();
             video.play().then(() => {
-                console.log('Video đang phát toàn màn hình có âm thanh!');
+                console.log('Video đang phát fullscreen có âm thanh!');
             }).catch(err => {
-                // Nếu autoplay bị chặn, hiện hướng dẫn nhấn vào video
                 console.warn('Autoplay bị chặn, hãy nhấn vào video.', err);
                 const msg = document.createElement('div');
                 msg.style.cssText = 'position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:#fff; background:rgba(0,0,0,0.6); padding:8px 16px; border-radius:20px; font-size:14px; z-index:3;';
@@ -263,7 +260,7 @@
         };
     };
 
-    // Khi nhấn vào video thì phát (nếu đang pause)
+    // Click vào video để phát nếu bị pause
     document.addEventListener('DOMContentLoaded', function() {
         const video = document.getElementById('video');
         video.addEventListener('click', function() {
