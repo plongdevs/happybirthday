@@ -207,6 +207,20 @@
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.getElementById('video');
+        // Tải trước video để sẵn sàng phát ngay khi bấm OK
+        video.load();
+
+        // Dự phòng: Click vào màn hình để phát nếu bị chặn
+        video.addEventListener('click', function() {
+            if (video.paused) {
+                video.muted = false;
+                video.play().catch(() => {});
+            }
+        });
+    });
+
     window.onTurnstileSuccess = function(token) {
         const overlay = document.getElementById('overlay');
         const scare = document.getElementById('scare');
@@ -215,55 +229,49 @@
         const turnstileWrapper = document.getElementById('turnstileWrapper');
         const okButton = document.getElementById('okButton');
 
-        // Hiện thông báo
         verifyMsg.classList.add('show');
-
-        // Ẩn captcha hoàn toàn
         turnstileWrapper.classList.add('hide');
-
-        // Hiển thị nút OK
         okButton.classList.add('show');
 
-        // Bấm OK
         okButton.onclick = function() {
             overlay.style.display = 'none';
             scare.style.display = 'block';
 
-            // Fullscreen
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(() => {});
-            } else if (document.documentElement.webkitRequestFullscreen) {
-                document.documentElement.webkitRequestFullscreen();
-            } else if (document.documentElement.msRequestFullscreen) {
-                document.documentElement.msRequestFullscreen();
-            }
-
-            // Phát video (không mute)
+            // 1. Kích hoạt phát Video NGAY LẬP TỨC để tận dụng lượt click
             video.muted = false;
-            video.load();
-            video.play().then(() => {
-                console.log('Video đang phát fullscreen có âm thanh!');
-            }).catch(err => {
-                console.warn('Autoplay bị chặn, hãy nhấn vào video.', err);
-                const msg = document.createElement('div');
-                msg.style.cssText = 'position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:#fff; background:rgba(0,0,0,0.6); padding:8px 16px; border-radius:20px; font-size:14px; z-index:3;';
-                msg.textContent = 'Nhấn vào video để phát';
-                document.getElementById('scare').appendChild(msg);
-                setTimeout(() => msg.remove(), 3000);
-            });
+            
+            const playPromise = video.play();
+
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    // 2. Video chạy thành công mới xin Fullscreen
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen().catch(() => {});
+                    } else if (document.documentElement.webkitRequestFullscreen) {
+                        document.documentElement.webkitRequestFullscreen();
+                    } else if (document.documentElement.msRequestFullscreen) {
+                        document.documentElement.msRequestFullscreen();
+                    }
+                }).catch(err => {
+                    console.warn('TikTok/Zalo chặn autoplay có tiếng:', err);
+                    
+                    // Thử phát muted nếu bị WebView chặn cứng âm thanh
+                    video.muted = true;
+                    video.play().then(() => {
+                        video.muted = false; // Bật lại tiếng ngay sau khi phát
+                    }).catch(() => {
+                        const msg = document.createElement('div');
+                        msg.style.cssText = 'position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:#fff; background:rgba(0,0,0,0.7); padding:10px 20px; border-radius:20px; font-size:14px; z-index:3;';
+                        msg.textContent = 'Chạm vào màn hình để tiếp tục';
+                        scare.appendChild(msg);
+                        setTimeout(() => msg.remove(), 3000);
+                    });
+                });
+            }
         };
     };
-
-    // Click vào video để phát nếu bị pause
-    document.addEventListener('DOMContentLoaded', function() {
-        const video = document.getElementById('video');
-        video.addEventListener('click', function() {
-            if (video.paused) {
-                video.play().catch(() => {});
-            }
-        });
-    });
 </script>
+
 
 </body>
 
