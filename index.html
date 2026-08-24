@@ -7,21 +7,17 @@
     <title>Halloween - Cloudflare Turnstile</title>
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <!-- Cloudflare Turnstile script -->
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <style>
-        /* Reset & nền */
         * {
             box-sizing: border-box;
         }
-
         body {
             background-color: #28282B;
             font-family: 'Comic Neue', sans-serif;
             margin: 0;
             min-height: 100vh;
         }
-
         .overlay {
             position: fixed;
             top: 0;
@@ -36,7 +32,6 @@
             backdrop-filter: blur(3px);
             transition: opacity 0.4s ease;
         }
-
         .overlay-body {
             position: relative;
             background: #ffffff;
@@ -50,7 +45,6 @@
             min-height: 200px;
             overflow: hidden;
         }
-
         .overlay-title {
             font-family: 'Comic Neue', cursive;
             font-size: 24px;
@@ -59,7 +53,6 @@
             margin: 0 0 4px 0;
             letter-spacing: 0.5px;
         }
-
         .overlay-sub {
             font-family: 'Comic Neue', cursive;
             font-size: 15px;
@@ -67,7 +60,6 @@
             margin: 0 0 20px 0;
             opacity: 0.85;
         }
-
         .turnstile-wrapper {
             display: flex;
             justify-content: center;
@@ -75,7 +67,6 @@
             transition: all 0.5s ease;
             transform-origin: center center;
         }
-
         .turnstile-wrapper.minimize {
             position: fixed;
             top: 10px;
@@ -85,12 +76,10 @@
             margin: 0;
             background: transparent;
         }
-
         .cf-turnstile {
             transform: scale(0.95);
             transform-origin: center center;
         }
-
         .verify-msg {
             color: #1a73e8;
             font-weight: 500;
@@ -104,7 +93,6 @@
         .verify-msg.show {
             opacity: 1;
         }
-
         .ok-button {
             position: absolute;
             bottom: 20px;
@@ -132,7 +120,6 @@
             background-color: #16a34a;
             transform: scale(1.05);
         }
-
         .scare {
             position: fixed;
             top: 0;
@@ -143,14 +130,12 @@
             display: none;
             background: #000;
         }
-
         .scare video {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
         }
-
         @media (max-width: 480px) {
             .overlay-body {
                 padding: 20px 16px 16px;
@@ -169,7 +154,6 @@
                 left: 16px;
             }
         }
-
         @media (max-width: 380px) {
             .cf-turnstile {
                 transform: scale(0.72);
@@ -177,85 +161,89 @@
         }
     </style>
 </head>
-
 <body>
-
-    <!-- Overlay -->
     <div id="overlay" class="overlay">
         <div class="overlay-body">
             <p class="overlay-title">Xác nhận bạn là con người</p>
             <p class="overlay-sub">Tích vào ô bên dưới</p>
             <div class="turnstile-wrapper" id="turnstileWrapper">
                 <div class="cf-turnstile"
-                data-sitekey="0x4AAAAAAEaGpfoU7OEsEqN_"
-                data-callback="onTurnstileSuccess"
-                data-theme="light"
-                data-size="normal">
+                     data-sitekey="0x4AAAAAAEaGpfoU7OEsEqN_"
+                     data-callback="onTurnstileSuccess"
+                     data-theme="light"
+                     data-size="normal">
+                </div>
             </div>
+            <div id="verifyMsg" class="verify-msg">✅ Xác nhận thành công!</div>
+            <button id="okButton" class="ok-button">🎃 OK</button>
         </div>
-        <div id="verifyMsg" class="verify-msg">✅ Xác nhận thành công!</div>
-        <button id="okButton" class="ok-button">OK</button>
     </div>
-</div>
 
-<!-- Video scare -->
-<div id="scare" class="scare">
-    <video id="video" src="./video.mp4" loop preload="auto" muted playsinline></video>
-</div>
+    <div id="scare" class="scare">
+        <video id="video" src="./video.mp4" loop preload="auto" playsinline></video>
+    </div>
 
-<script>
-    window.onTurnstileSuccess = function(token) {
-        const overlay = document.getElementById('overlay');
-        const scare = document.getElementById('scare');
-        const video = document.getElementById('video');
-        const verifyMsg = document.getElementById('verifyMsg');
-        const turnstileWrapper = document.getElementById('turnstileWrapper');
-        const okButton = document.getElementById('okButton');
+    <script>
+        // Biến để tránh thêm nhiều sự kiện click lên nút OK
+        let okButtonClicked = false;
 
-        verifyMsg.classList.add('show');
-        turnstileWrapper.classList.add('minimize');
-        okButton.classList.add('show');
+        window.onTurnstileSuccess = function(token) {
+            const verifyMsg = document.getElementById('verifyMsg');
+            const turnstileWrapper = document.getElementById('turnstileWrapper');
+            const okButton = document.getElementById('okButton');
 
-        okButton.addEventListener('click', function() {
-            // Ẩn overlay và hiện video
-            overlay.style.display = 'none';
-            scare.style.display = 'block';
+            // Hiện thông báo
+            verifyMsg.classList.add('show');
+            // Thu nhỏ captcha
+            turnstileWrapper.classList.add('minimize');
+            // Hiển thị nút OK với hiệu ứng
+            okButton.classList.add('show');
+        };
 
-            // Kích hoạt toàn màn hình (F11 ảo)
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(() => {});
-            } else if (document.documentElement.webkitRequestFullscreen) { // Safari
-                document.documentElement.webkitRequestFullscreen();
-            } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
-                document.documentElement.msRequestFullscreen();
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            const okButton = document.getElementById('okButton');
+            const overlay = document.getElementById('overlay');
+            const scare = document.getElementById('scare');
+            const video = document.getElementById('video');
 
-            // Đảm bảo video tải và phát
-            video.load();
-            video.play().then(() => {
-                console.log('Video đang phát ở chế độ toàn màn hình!');
-            }).catch(err => {
-                console.warn('Không thể tự động phát, hãy nhấn vào video.', err);
-                const msg = document.createElement('div');
-                msg.style.cssText = 'position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:#fff; background:rgba(0,0,0,0.6); padding:8px 16px; border-radius:20px; font-size:14px; z-index:3;';
-                msg.textContent = 'Nhấn vào video để phát';
-                document.getElementById('scare').appendChild(msg);
-                setTimeout(() => msg.remove(), 3000);
+            okButton.addEventListener('click', function() {
+                if (okButtonClicked) return;
+                okButtonClicked = true;
+
+                // Ẩn overlay
+                overlay.style.display = 'none';
+                // Hiện video
+                scare.style.display = 'block';
+
+                // Kích hoạt fullscreen
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                }
+
+                // Load và phát video (không mute)
+                video.load();
+                video.play().catch(function(err) {
+                    // Nếu không tự động phát được, hiện hướng dẫn
+                    console.warn('Không thể tự động phát video:', err);
+                    const msg = document.createElement('div');
+                    msg.style.cssText = 'position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:#fff; background:rgba(0,0,0,0.6); padding:8px 16px; border-radius:20px; font-size:14px; z-index:3;';
+                    msg.textContent = '🎃 Nhấn vào video để phát';
+                    document.getElementById('scare').appendChild(msg);
+                    setTimeout(() => msg.remove(), 3000);
+                });
+            });
+
+            // Click vào video để phát nếu đang pause
+            video.addEventListener('click', function() {
+                if (video.paused) {
+                    video.play().catch(() => {});
+                }
             });
         });
-    };
-
-    // Khi nhấn vào video thì phát (nếu đang pause)
-    document.addEventListener('DOMContentLoaded', function() {
-        const video = document.getElementById('video');
-        video.addEventListener('click', function() {
-            if (video.paused) {
-                video.play().catch(() => {});
-            }
-        });
-    });
-</script>
-
+    </script>
 </body>
-
 </html>
